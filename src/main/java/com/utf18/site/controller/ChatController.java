@@ -32,43 +32,7 @@ public class ChatController {
 	@Autowired
 	ChatService chatService;
 	
-	//전체채팅룸으로 이동
-	@RequestMapping(value="chat.do", method = { RequestMethod.GET, RequestMethod.POST })
-	public String chat (Model model,HttpServletRequest req, HttpSession session) throws Exception{
 		
-		logger.info("chat.do RUN! / Run Time: " + new Date());	
-		
-		UserVO login = (UserVO)session.getAttribute("login");
-		
-		if(login==null) {
-			return "redirect:/loginform.do";
-		}
-		
-		//DB에 현재 아이디로 어떤 방에 들어가있는지 조사 후, 세팅하기
-		ChatMemberVO chatM = chatService.getRoomMember(new ChatMemberVO(0, login.getEmail(), "",""));
-		
-		//만약 채팅방을 처음 입장하는 것이라면 방에대한 아이디정보를 생성
-		if(chatM ==null) {
-			chatService.addRoomMember(new ChatMemberVO(0, login.getEmail(), "all", "all"));
-			
-			//추가를 한다음 chatM을 다시 받아오도록한다.
-			chatM = chatService.getRoomMember(new ChatMemberVO(0, login.getEmail(), "",""));
-			logger.info("아이디 정보 추가 성공!" + new Date());
-			
-		}
-		//존재한다면 방정보를 all로 변경 
-		else {
-			chatService.updateRoomMember(new ChatMemberVO(0,  login.getEmail(), "all", "")); //room 변경
-			
-		}
-		
-
-		//현재 방이름 넣기(전체채팅방이니 all)
-		model.addAttribute("room", "all");
-
-		return "chat";
-	}
-	
 	@ResponseBody
 	@RequestMapping(value="getRoomList.do", method= { RequestMethod.GET, RequestMethod.POST })
 	public List<ChatVO> getRoomList() throws Exception{
@@ -147,30 +111,7 @@ public class ChatController {
 		return "broadcast";
 	}
 	
-	//방 만들기 (이미지 저장하기)
-	@RequestMapping(value="create.do", method = { RequestMethod.GET, RequestMethod.POST })
-	public String CreateChatRoom(Model model, HttpServletRequest req, ChatVO chat ) throws Exception {
-		
-		//멀티파트파일 추가 후 VO로부터 업로드 파일 받아오기
-		MultipartFile uploadFile = chat.getUploadFile();
-		
-		//업로드한 파일이 존재하는 경우
-		if(!uploadFile.isEmpty()) {
-			//파일이름받아오기
-			String fileName = uploadFile.getOriginalFilename();
-			//업로드한 파일을 지정한 경로에 저장
-			//경로는 워크스페이스 밑 메타데이터 밑 숨겨진 프로젝트에 업로드해야 바로 나타난다
-			uploadFile.transferTo(new File("D:/Proj/download/workspace2222/.metadata/.plugins/org.eclipse.wst.server.core/tmp0/chatthumbnail/" +fileName));
-			chat.setFileName(fileName);
-		}
-		//업로드한 파일이 없을 경우
-		else {
-			//파일명이 없음
-			chat.setFileName("");
-		}
-		
-		return null;	
-	}
+
 	
 	
 }
