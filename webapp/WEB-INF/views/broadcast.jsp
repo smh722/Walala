@@ -1,3 +1,4 @@
+<%@page import="com.utf18.site.vo.UserVO"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
    pageEncoding="UTF-8"%>
    
@@ -12,17 +13,12 @@
 <!-- 위 3개의 메타 태그는 *반드시* head 태그의 처음에 와야합니다; 어떤 다른 콘텐츠들은 반드시 이 태그들 *다음에* 와야 합니다 -->
 <title>제가 안했어요!! 이의제기</title>
 
-<!-- 부트스트랩 -->
-<link href="${pageContext.request.contextPath}/assets/bootstrap/css/bootstrap.css" rel="stylesheet">
 
 <!-- 구글폰트 -->
 <link href="https://fonts.googleapis.com/css?family=Hi+Melody" rel="stylesheet">
 
 <!-- jQuery (부트스트랩의 자바스크립트 플러그인을 위해 필요합니다) -->
 <script type="text/javascript" src="${pageContext.request.contextPath}/assets/js/jquery-1.12.4.js"></script>
-
-<!-- 모든 컴파일된 플러그인을 포함합니다 (아래), 원하지 않는다면 필요한 각각의 파일을 포함하세요 -->
-<script src="js/bootstrap.min.js"></script>
 
    <style>
       body {
@@ -81,6 +77,8 @@
          width: 98%;
          margin-left: 5px;
          resize: none;
+         text-align: left;
+         border: solid lightgray 1px;
       }
       
       #message {
@@ -154,6 +152,7 @@
          height: 60px;
       }
       
+      
       </style>
    <script>
          function manage() {
@@ -164,14 +163,103 @@
            document.getElementById("subscribe_img").style.display="none"; 
          } 
          self.setTimeout("hideDiv()",3000); // 초 지정   
+         
+        
    </script>
+   
+   <script type="text/javascript">
+		var sock = null;
+		var id = '${login.email}';
+		$(document).ready(function() {
+		   $("#message").focus(); // 처음 접속시, 메세지 입력창에 focus 시킴
+		   
+		   //서버로 접속할때는 localhost로 설정해줘야됨 (관리자)
+		   // 본인의 서버로 접속할경우, admin으로 들어가야만 채팅이 가능하다.
+		   if(id=='admin@admin.com'){
+		      ws = new WebSocket("ws://localhost:8181/Walalaa/echo.do");
+		   }else{
+		   // 그 외 회원은 admin을 제외한 다른 아이디로 접속 시, 채팅참여가 가능하다.
+		      ws = new WebSocket("ws://192.168.0.13:8181/Walalaa/echo.do");   
+		   }
+		   
+		   
+		   //서버로 메세지 보낼때
+		   ws.onopen = function() {
+			//처음 접속 시에만 채팅방에 추가함(현재 방정보도 같이 출력)	   
+		      	$("#chatLog").append("<b>채팅방에 참여했습니다.</b> : "+$("#room").val()+"<br>");
+		      	
+		      	//보내기 버튼 눌렀을때
+		      	$("#buttonMessage").click(function() {
+		         	var msg = $('input[name=chatInput]').val().trim("!%/"); //메시지
+		         	var room = $("#room").val().trim("!%/"); //방이름(전체단톡방이면 all)
+		         
+		         	//전체에게 보낼때
+		         	if(msg !=""){
+		         		//소켓으로 메세지 전달
+		            	ws.send(msg+"!%/"+""+"!%/"+room);
+		            	$("#chatLog").append("<b style='color:blue'>[${login.nickname}]</b> : "+msg+"<br>");
+		            
+		            	$("#chatLog").scrollTop(99999999); //글 입력 시 무조건 하단으로 보냄
+		            	$("#message").val(""); //입력창 내용지우기
+		            	$("#message").focus(); //입력창 포커스 획득
+		         	}
+		            
+		            
+		         
+		      	});
+		      	//엔터키 입력처리
+		      	$("#message").keypress(function(event) {
+		         	if(event.which == "13"){
+		            	event.preventDefault();
+		            	
+		            	var msg = $('input[name=chatInput]').val().trim("!%/"); //메시지
+		             	var room = $("#room").val().trim("!%/"); //방이름(전체단톡방이면 all)
+		             	//전체에게 보낼때
+		             	if(msg !=""){
+		             		//소켓으로 메세지 전달
+		             		
+		                	ws.send(msg+"!%/"+""+"!%/"+room);
+		                	$("#chatLog").append("<b style='color:blue'>[${login.nickname}]</b> : "+msg+"<br>");
+		                
+		                	$("#chatLog").scrollTop(99999999); //글 입력 시 무조건 하단으로 보냄
+		                	$("#message").val(""); //입력창 내용지우기
+		                	$("#message").focus(); //입력창 포커스 획득
+		             	}
+		         	}
+		      	}); 
+		      	
+		   	};
+			//서버로 부터 받은 메세지 보내주기
+		   	ws.onmessage = function(message) {
+				
+		    	//메세지 
+		      	var jsonData = JSON.parse(message.data);
+		      	if(jsonData.message !=null){
+		        	$("#chatLog").append(jsonData.message+"<br>");
+		        	$("#chatLog").scrollTop(99999999);
+		      	}
+		      	
+		      	
+			};   
+		   
+		   	//닫힐때
+		   	ws.onclose = function(event) {};
+		});
+		</script>
 </head>
 <body>
+	<% UserVO login = (UserVO)session.getAttribute("login"); %>
+	  <!-- 세팅 부분 init -->
+	<input type="hidden" id="userId" value="${login.email}">  <!-- 유저아이디  -->
+	<input type="hidden" id="room" value="${room}"> <!-- 현재 유저가 접속한 방이름 -->
+	
+
    <header>
          <jsp:include page="search_navbar.jsp"></jsp:include>
    </header>
    
    <div class="main sub">
+   	<form id="chat">
       <table id="broad">
          <tr>
             <td>
@@ -193,22 +281,21 @@
          <tr>
             <td rowspan="3" id="broadScreen">
                <div class="video-container">
-               
-            <div id="subscribe_img" style="position: relative; z-index:2; float: left; top: 0px;">
-               <img src="${pageContext.request.contextPath}/assets/images/heart_moving2.gif" alt="구독 감사">
-               <font color="white" size="5px" 
-               style="position: relative; z-index:3; float: left; top: 55px; left: 20px;"><strong>쏠님이 구독!</strong></font>
-            </div>
-            <!--  자동재생소스추가하려면   ?rel=0&autoplay=1 -->
+		            <div id="subscribe_img" style="position: relative; z-index:2; float: left; top: 0px;">
+		               <img src="${pageContext.request.contextPath}/assets/images/heart_moving2.gif" alt="구독 감사">
+		               <font color="white" size="5px" 
+		               style="position: relative; z-index:3; float: left; top: 55px; left: 20px;"><strong>쏠님이 구독!</strong></font>
+		            </div>
+		            <!--  자동재생소스추가하려면   ?rel=0&autoplay=1 -->
                   <iframe height="100%" width="100%" src="https://www.youtube.com/embed/CB6gwOJp_8U?rel=0&autoplay=1" frameborder="0" allowfullscreen></iframe>
                </div>
             </td>
-            <td colspan="2" id="chatScreen"><textarea id="chatLog" class="chat_log" readonly></textarea></td>
+            <td colspan="2" id="chatScreen"><div id="chatLog" class="chat_log"></div></td>
          </tr>
          <tr>
-            <form id="chat">
+            
                <td class="col-xs-1w" colspan="3">
-   <!--           <input id="name" class="name" type="text" readonly> -->
+          	   <input id="name" class="name" type="hidden" readonly>
                   <img class="name" alt="유저이미지" width="28px" height="28px" 
                   src="${pageContext.request.contextPath}/assets/images/logo_profile.png">
                   <strong>막창사랑</strong> · 
@@ -216,42 +303,18 @@
                </td>
          </tr>
          <tr>
-               <td class="col-xs-12w"> <input id="message" class="message" type="text"></td>
-               <td> <input type="submit" class="chat btn-primary" value="전송"
-                style="height:100px; width:100px; border:0px"/></td>
-            </form>
+               <td class="col-xs-12w"> <input type="text" id="message" name="chatInput" class="message" value="" ></td>
+               <td> 
+               	<input type="button" id="buttonMessage" value="전송" class="chat btn-primary" style="height:100px; width:100px; border:0px">
+               </td>
+            
          </tr>
       </table>
+      </form>
    </div>
 
 
-   <div id="box" class="box">
-      <script src="http://192.168.1.6:82/socket.io/socket.io.js"></script>
-<!--       <script src="https://code.jquery.com/jquery-1.11.1.js"></script>  없어도 될듯함-->
-      <script>
-         $(document).ready(
-               function() {
-                  var socket = io("http://192.168.1.6:82");
-
-                  $('#chat').on(
-                        'submit',
-                        function(e) {
-                           socket.emit('send message', $('#name')
-                                 .val(), $('#message').val());
-                           $('#message').val("");
-                           $("#message").focus();
-                           e.preventDefault();
-                        });
-                  socket.on('receive message', function(msg) {
-                     $('#chatLog').append(msg + '\n');
-                     $('#chatLog').scrollTop(
-                           $('#chatLog')[0].scrollHeight);
-                  });
-                  socket.on('change name', function(name) {
-                     $('#name').val(name);
-                  });
-               });
-      </script>
-   </div>
+   
+   
 </body>
 </html>

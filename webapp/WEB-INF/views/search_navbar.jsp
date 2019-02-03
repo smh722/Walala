@@ -1,3 +1,4 @@
+<%@page import="com.utf18.site.vo.UserVO"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
    pageEncoding="UTF-8"%>
 
@@ -44,7 +45,7 @@
       .navmenu {
          margin-top: -6px;
          width: 240px;
-         
+         position:relative;
       }
       .logo{
          margin-right: 20px;
@@ -101,17 +102,32 @@
           float: right !important;
           margin-right: -15px;
           margin-top: 2px;
+          display: flex;
+      }
+      
+      .logintext{
+	    margin: auto;
+	    padding-left: 10px;
+      }
+      
+      .usernick {
+      	min-width:10px!important;
+		max-width:75%!important;
+		transition: width 0.25s;
+      	border: none;
       }
    </style>
 
 </head>
 <body>
+	<% UserVO login = (UserVO)session.getAttribute("login"); %>
 
+	
    <div class="topbar">
       
       <div class="img_scale logo">
          <a href="main.do">
-            <img class="scale" src="${pageContext.request.contextPath}/assets/images/logo2.png"   width="100px">
+            <img class="scale" src="${pageContext.request.contextPath}/assets/images/logo2.png" width="100px">
          </a>
       </div>
       
@@ -128,29 +144,67 @@
       
       <div class="navmenu">
          <form class="navbar-form navbar-right">
-            <div class="dropdown">
+<!--             <div id="brFinish"> -->
+<!--             	<a href="broadcast_finish.do"> -->
+<!--                		<img src="https://img.icons8.com/material/50/000000/no-video.png" width="41px"> -->
+<!--             	</a> -->
+<!--             </div> -->
+            
+           
+            <div id="login" class="logintext"> 
+            	<a href="loginform.do">로그인</a> 
+            </div> 
+             
+            <div class="dropdown" id="usrimg">
                <button class="btn dropdown-toggle userbtn btn-group" type="button" data-toggle="dropdown" style="padding-left: 1px; padding-right: 1px;">
                   <img alt="유저이미지" src="${pageContext.request.contextPath}/assets/images/user.png" width="30px">
                   </button>
+                  <input class="usernick" type="text" value=${login.nickname} id="usernick" readonly/>
                   <ul class="dropdown-menu" style="left: 0;">
                      <li><a href="mychannel.do">내 채널</a></li>
                      <li><a href="#">마이페이지</a></li>
-                     <li><a href="#">로그아웃</a></li>
+                     <li><a href="logout.do">로그아웃</a></li>
                   </ul>
+            </div> 
+            
+            <div id="brStart">
+	            <a href="broadcast_setting.do">
+	               	<img src="https://img.icons8.com/material/50/000000/video-call.png" width="41px">
+	            </a>
             </div>
-            <a href="broadcast_finish.do">
-               <img src="https://img.icons8.com/material/50/000000/no-video.png" width="41px">
-            </a>
-
-            <a href="broadcast_setting.do">
-               <img src="https://img.icons8.com/material/50/000000/video-call.png" width="41px">
-            </a>
-            <a class=login href="loginform.do">로그인</a>
+                     
          </form>
       </div>
    </div>
 
 <hr>
+	<script type="text/javascript">
+		if("${login.email}" !=""){
+			console.log("세션 연결 됨");
+			$("#login").show().hide();
+			$("#usrimg").show();
+			
+		}else{
+			console.log("세션 연결 안됨");
+			$("#login").show();
+			$("#usrimg").show().hide();
+		}
+		
+		function resizable (el, factor) {
+			  var number = Number(factor) || 7.7;
+			  function resize() {
+				  el.style.width = ((el.value.length+1) * number) + 'px';
+			 }
+			  var e = 'blur,change'.split(',');
+			  for (var i in e) el.addEventListener(e[i],resize,false);
+			  resize();
+		}
+		resizable(document.getElementById('usernick'),7);
+		
+		
+		
+	</script>
 
 </body>
+
 </html>
